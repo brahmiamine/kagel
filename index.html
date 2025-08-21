@@ -406,7 +406,7 @@
       // عنوان الصفحة
       if(!skipTitle && titleToggle.checked && state.phase !== 'done'){
         const emoji = state.phase === 'hold' ? '🟢' : (state.phase === 'rest' ? '🔵' : '⏳');
-        document.title = f"{emoji} {max(0, secLeftRounded)} · {state.repNow}/{state.reps}";
+        document.title = `${emoji} ${Math.max(0, secLeftRounded)} · ${state.repNow}/${state.reps}`;
       }else if(!titleToggle.checked && state.phase !== 'done'){
         document.title = 'عداد تمارين كيجل';
       }
