@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>عداد تمارين كيجل</title>
+  <style>
+    :root{
+      --bg:#0f172a; --card:#111827; --text:#e5e7eb; --muted:#9ca3af;
+      --brand:#22c55e; --brand-2:#10b981; --danger:#ef4444; --accent:#38bdf8;
+      --shadow: 0 10px 25px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    @media (prefers-color-scheme: light){
+      :root { --bg:#f7fafc; --card:#ffffff; --text:#111827; --muted:#6b7280; --shadow: 0 10px 25px rgba(0,0,0,.10);}
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Kufi Arabic", "Noto Sans Arabic", Arial;
+      background: radial-gradient(1200px 600px at 50% -100%, #0ea5e9 0%, transparent 60%), var(--bg);
+      color:var(--text); min-height:100dvh; display:grid; place-items:center; padding:18px;
+    }
+    .app{
+      width:100%; max-width:780px; background:var(--card); border-radius:var(--radius);
+      box-shadow: var(--shadow); overflow:hidden; border:1px solid rgba(255,255,255,.06)
+    }
+    header{
+      padding:20px 22px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border-bottom:1px solid rgba(255,255,255,.06)
+    }
+    .title{ font-weight:800; letter-spacing:.2px; display:flex; align-items:center; gap:10px; }
+    .badge{ padding:4px 10px; border-radius:999px; background:rgba(34,197,94,.15); color:#bbf7d0; font-size:12px }
+    main{ display:grid; grid-template-columns: 1.1fr .9fr; gap:22px; padding:22px }
+    @media (max-width:860px){ main{grid-template-columns: 1fr} }
+    .panel{ background:linear-gradient(180deg, rgba(255,255,255,.02), transparent), rgba(255,255,255,.02);
+      border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:18px }
+    h2{ margin:0 0 10px; font-size:18px }
+    .phase{
+      display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px
+    }
+    .phase .chip{
+      padding:6px 12px; border-radius:999px; font-weight:700; letter-spacing:.3px
+    }
+    .chip.hold{ background:rgba(34,197,94,.15); color:#86efac; }
+    .chip.rest{ background:rgba(56,189,248,.15); color:#bae6fd; }
+    .timer{
+      display:grid; place-items:center; padding:26px; border-radius:14px;
+      background:linear-gradient(180deg, rgba(34,197,94,.07), rgba(56,189,248,.07));
+      border:1px dashed rgba(255,255,255,.12); margin-bottom:14px
+    }
+    .big{font-size:68px; font-weight:900; line-height:1}
+    .label{ color:var(--muted); margin-top:6px }
+    .progress{ height:12px; background:rgba(255,255,255,.06); border-radius:999px; overflow:hidden; position:relative }
+    .progress > span{ position:absolute; inset:0 100% 0 0; background:linear-gradient(90deg, var(--brand), var(--brand-2)); transition:width .2s ease }
+    .row{ display:flex; gap:10px; align-items:end; margin:10px 0 }
+    .field{ flex:1 }
+    .field label{ display:block; font-size:12px; color:var(--muted); margin:0 0 6px }
+    input[type="number"]{
+      width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04); color:var(--text); font-size:16px; outline:none
+    }
+    .controls{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px }
+    button{
+      appearance:none; border:none; cursor:pointer; padding:12px 16px; border-radius:12px; font-weight:700;
+      background:rgba(255,255,255,.06); color:var(--text); transition: transform .04s ease, background .2s ease, border .2s ease;
+      border:1px solid rgba(255,255,255,.10)
+    }
+    button:hover{ background:rgba(255,255,255,.10) }
+    button:active{ transform: translateY(1px) }
+    .primary{ background:linear-gradient(90deg, var(--brand), var(--brand-2)); color:#052e16; border:none }
+    .danger{ background:rgba(239,68,68,.15); color:#fecaca; border:1px solid rgba(239,68,68,.35) }
+    .ghost{ background:transparent }
+    .tog{ display:flex; gap:12px; flex-wrap:wrap; margin-top:8px }
+    .tog label{ display:flex; gap:8px; align-items:center; font-size:14px; color:var(--muted) }
+    .rep{ font-variant-numeric: tabular-nums }
+    footer{ padding:16px 22px; border-top:1px solid rgba(255,255,255,.06); color:var(--muted); font-size:13px }
+    .mini{ display:flex; gap:10px; align-items:center; margin-top:8px }
+    .mini input{ width:100px; text-align:center }
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="عداد تمارين كيجل">
+    <header>
+      <div class="title">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" opacity=".3" />
+          <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <span>عداد تمارين كيجل</span>
+      </div>
+      <span class="badge">Hold / Relax Counter</span>
+    </header>
+
+    <main>
+      <!-- لوحة المؤقّت -->
+      <section class="panel" aria-live="polite">
+        <h2>المؤقّت</h2>
+        <div class="phase">
+          <div id="phaseChip" class="chip hold">مرحلة: شدّ</div>
+          <div class="rep">التكرار: <b id="repNow">0</b>/<span id="repTotal">10</span></div>
+        </div>
+
+        <div class="timer">
+          <div class="big" id="countdown">5</div>
+          <div class="label" id="phaseLabel">شدّ العضلة…</div>
+        </div>
+
+        <div class="progress" aria-label="شريط التقدّم">
+          <span id="bar" style="width:0%"></span>
+        </div>
+
+        <div class="controls">
+          <button id="startBtn" class="primary" aria-label="ابدأ (مسافة للتبديل)">ابدأ</button>
+          <button id="pauseBtn" class="" aria-label="إيقاف مؤقت">إيقاف مؤقت</button>
+          <button id="resetBtn" class="danger" aria-label="إعادة التعيين">إعادة</button>
+          <button id="skipBtn" class="ghost" aria-label="تخطي المرحلة">تخطي المرحلة</button>
+        </div>
+
+        <div class="tog">
+          <label><input type="checkbox" id="soundToggle" checked />صوت تنبيه</label>
+          <label><input type="checkbox" id="vibrateToggle" />اهتزاز</label>
+          <label><input type="checkbox" id="titleToggle" />عرض العدّ في عنوان الصفحة</label>
+        </div>
+
+        <div class="mini">
+          <label>عداد يدوي سريع:</label>
+          <input id="tapCount" type="number" value="0" readonly />
+          <button id="tapBtn">+1</button>
+          <button id="tapReset" class="ghost">تصفير</button>
+        </div>
+      </section>
+
+      <!-- الإعدادات -->
+      <section class="panel">
+        <h2>الإعدادات</h2>
+        <div class="row">
+          <div class="field">
+            <label for="holdSec">مدة الشدّ (ثانية)</label>
+            <input id="holdSec" type="number" min="1" max="30" value="5" />
+          </div>
+          <div class="field">
+            <label for="restSec">مدة الاسترخاء (ثانية)</label>
+            <input id="restSec" type="number" min="1" max="30" value="5" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="reps">عدد التكرارات لكل جلسة</label>
+            <input id="reps" type="number" min="1" max="60" value="10" />
+          </div>
+          <div class="field">
+            <label for="prep">عدّ تنازلي تمهيدي (ث)</label>
+            <input id="prep" type="number" min="0" max="10" value="3" />
+          </div>
+        </div>
+        <div class="row">
+          <button id="saveBtn" class="primary">حفظ الإعدادات</button>
+          <button id="defaultsBtn" class="ghost">الافتراضي</button>
+        </div>
+        <p class="label" style="margin:8px 0 0">تُحفظ الإعدادات محليًا في متصفحك.</p>
+      </section>
+    </main>
+
+    <footer>
+      اختصار لوحة المفاتيح: مسافة = بدء/إيقاف مؤقت · S = تخطي · R = إعادة.
+    </footer>
+  </div>
+
+  <script>
+    // ---------- عناصر DOM ----------
+    const countdownEl = document.getElementById('countdown');
+    const phaseLabel  = document.getElementById('phaseLabel');
+    const phaseChip   = document.getElementById('phaseChip');
+    const repNowEl    = document.getElementById('repNow');
+    const repTotalEl  = document.getElementById('repTotal');
+    const barEl       = document.getElementById('bar');
+
+    const holdInput   = document.getElementById('holdSec');
+    const restInput   = document.getElementById('restSec');
+    const repsInput   = document.getElementById('reps');
+    const prepInput   = document.getElementById('prep');
+
+    const startBtn    = document.getElementById('startBtn');
+    const pauseBtn    = document.getElementById('pauseBtn');
+    const resetBtn    = document.getElementById('resetBtn');
+    const skipBtn     = document.getElementById('skipBtn');
+    const saveBtn     = document.getElementById('saveBtn');
+    const defaultsBtn = document.getElementById('defaultsBtn');
+
+    const soundToggle   = document.getElementById('soundToggle');
+    const vibrateToggle = document.getElementById('vibrateToggle');
+    const titleToggle   = document.getElementById('titleToggle');
+
+    const tapBtn    = document.getElementById('tapBtn');
+    const tapReset  = document.getElementById('tapReset');
+    const tapCount  = document.getElementById('tapCount');
+
+    // ---------- حالة التطبيق ----------
+    let state = {
+      phase: 'prep',            // 'prep' | 'hold' | 'rest' | 'done'
+      secondsLeft: 3,
+      repNow: 0,
+      reps: 10,
+      holdSec: 5,
+      restSec: 5,
+      prepSec: 3,
+      running: false,
+      timerId: null,
+      lastTick: null
+    };
+
+    // حفظ/تحميل الإعدادات
+    const LS_KEY = 'kegel-settings-v1';
+    function saveSettings(){
+      const cfg = {
+        holdSec: clamp(+holdInput.value, 1, 30),
+        restSec: clamp(+restInput.value, 1, 30),
+        reps:    clamp(+repsInput.value, 1, 60),
+        prepSec: clamp(+prepInput.value, 0, 10),
+        sound:   !!soundToggle.checked,
+        vibrate: !!vibrateToggle.checked,
+        title:   !!titleToggle.checked
+      };
+      localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+      applySettings(cfg, true);
+    }
+    function loadSettings(){
+      try{
+        const cfg = JSON.parse(localStorage.getItem(LS_KEY));
+        if(!cfg) return;
+        holdInput.value = cfg.holdSec ?? 5;
+        restInput.value = cfg.restSec ?? 5;
+        repsInput.value = cfg.reps ?? 10;
+        prepInput.value = cfg.prepSec ?? 3;
+        soundToggle.checked   = cfg.sound ?? true;
+        vibrateToggle.checked = cfg.vibrate ?? false;
+        titleToggle.checked   = cfg.title ?? false;
+        applySettings(cfg, true);
+      }catch{}
+    }
+    function applySettings(cfg, quiet=false){
+      state.holdSec = clamp(+cfg.holdSec || 5, 1, 30);
+      state.restSec = clamp(+cfg.restSec || 5, 1, 30);
+      state.reps    = clamp(+cfg.reps || 10,   1, 60);
+      state.prepSec = clamp(+cfg.prepSec|| 3,  0, 10);
+      if(!quiet) render();
+    }
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+    // ---------- صوت تنبيه بسيط ----------
+    let audioCtx = null;
+    function beep(freq=880, ms=120){
+      if(!soundToggle.checked) return;
+      try{
+        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = freq;
+        g.gain.value = 0.05;
+        o.connect(g).connect(audioCtx.destination);
+        o.start();
+        setTimeout(()=>o.stop(), ms);
+      }catch{}
+    }
+    function vibrate(pattern=80){
+      if(!vibrateToggle.checked) return;
+      if(navigator.vibrate) navigator.vibrate(pattern);
+    }
+
+    // ---------- مؤقّت ----------
+    function start(){
+      if(state.running) return;
+      // لو في بداية الجلسة
+      if(state.phase === 'done'){
+        reset();
+      }
+      // تهيئة إن لزم
+      if(state.phase === 'prep'){
+        state.secondsLeft = state.prepSec;
+      }else if(state.phase === 'hold' || state.phase === 'rest'){
+        // اترك secondsLeft كما هي
+      }else{
+        state.phase = state.prepSec > 0 ? 'prep' : 'hold';
+        state.secondsLeft = state.phase === 'prep' ? state.prepSec : state.holdSec;
+      }
+      state.running = true;
+      state.lastTick = Date.now();
+      tick(); // حتى يظهر مباشرة
+      state.timerId = setInterval(tick, 200); // نحدّث كل 200ms لثبات أفضل
+      render();
+    }
+    function pause(){
+      if(!state.running) return;
+      state.running = false;
+      clearInterval(state.timerId);
+      state.timerId = null;
+      render();
+    }
+    function reset(){
+      state.phase = 'prep';
+      state.repNow = 0;
+      state.secondsLeft = state.prepSec;
+      state.running = false;
+      clearInterval(state.timerId);
+      state.timerId = null;
+      document.title = 'عداد تمارين كيجل';
+      render(true);
+    }
+    function skipPhase(){
+      if(state.phase === 'done') return;
+      nextPhase(true);
+    }
+
+    function tick(){
+      const now = Date.now();
+      const elapsed = (now - state.lastTick) / 1000;
+      state.lastTick = now;
+      if(!state.running) return;
+
+      // أنقص الوقت المتبقي
+      state.secondsLeft -= elapsed;
+      // صافرة خفيفة عند آخر ثانية
+      if(state.secondsLeft <= 1 && state.secondsLeft + elapsed > 1){
+        beep(1000, 120);
+      }
+      if(state.secondsLeft <= 0){
+        nextPhase();
+      }
+      render();
+    }
+
+    function nextPhase(skipped=false){
+      if(state.phase === 'prep'){
+        state.phase = 'hold';
+        state.secondsLeft = state.holdSec;
+        if(!skipped){ beep(900,140); vibrate(60); }
+        return;
+      }
+      if(state.phase === 'hold'){
+        state.phase = 'rest';
+        state.secondsLeft = state.restSec;
+        beep(700,120); vibrate(40);
+        return;
+      }
+      if(state.phase === 'rest'){
+        state.repNow++;
+        // انتهت الجلسة؟
+        if(state.repNow >= state.reps){
+          state.phase = 'done';
+          state.running = false;
+          clearInterval(state.timerId);
+          state.timerId = null;
+          countdownEl.textContent = 'تمّت 👏';
+          phaseLabel.textContent = 'أحسنت! خذ استراحة ثم أعد الجلسة إن شئت.';
+          phaseChip.className = 'chip rest';
+          phaseChip.textContent = 'انتهت الجلسة';
+          barEl.style.width = '100%';
+          beep(1200,180); setTimeout(()=>beep(1200,180),220);
+          vibrate([60,50,60]);
+          document.title = 'انتهت الجلسة ✅';
+          return;
+        }else{
+          // تكرار جديد
+          state.phase = 'hold';
+          state.secondsLeft = state.holdSec;
+          beep(900,140); vibrate(40);
+        }
+      }
+    }
+
+    // ---------- عرض الواجهة ----------
+    function render(skipTitle){
+      // ضبط النصوص
+      repTotalEl.textContent = state.reps;
+      repNowEl.textContent = state.repNow;
+
+      // تحديث المرحلة
+      const secLeftRounded = Math.max(0, Math.ceil(state.secondsLeft));
+      if(state.phase === 'prep'){
+        phaseLabel.textContent = 'استعد…';
+        phaseChip.className = 'chip rest';
+        phaseChip.textContent = 'تمهيد';
+      }else if(state.phase === 'hold'){
+        phaseLabel.textContent = 'شدّ العضلة…';
+        phaseChip.className = 'chip hold';
+        phaseChip.textContent = 'مرحلة: شدّ';
+      }else if(state.phase === 'rest'){
+        phaseLabel.textContent = 'استرخِ…';
+        phaseChip.className = 'chip rest';
+        phaseChip.textContent = 'مرحلة: استرخاء';
+      }else if(state.phase === 'done'){
+        // تم التعامل معها في nextPhase
+      }
+
+      if(state.phase !== 'done'){
+        countdownEl.textContent = secLeftRounded;
+      }
+      // تقدّم الشريط
+      const progress = (state.repNow / state.reps) * 100;
+      barEl.style.width = progress + '%';
+
+      // أزرار
+      startBtn.disabled = state.running;
+      pauseBtn.disabled = !state.running;
+
+      // عنوان الصفحة
+      if(!skipTitle && titleToggle.checked && state.phase !== 'done'){
+        const emoji = state.phase === 'hold' ? '🟢' : (state.phase === 'rest' ? '🔵' : '⏳');
+        document.title = f"{emoji} {max(0, secLeftRounded)} · {state.repNow}/{state.reps}";
+      }else if(!titleToggle.checked && state.phase !== 'done'){
+        document.title = 'عداد تمارين كيجل';
+      }
+    }
+
+    // ---------- أحداث ----------
+    startBtn.addEventListener('click', ()=>{ start(); });
+    pauseBtn.addEventListener('click', ()=>{ pause(); });
+    resetBtn.addEventListener('click', ()=>{ reset(); });
+    skipBtn.addEventListener('click', ()=>{ skipPhase(); });
+
+    saveBtn.addEventListener('click', ()=>{ saveSettings(); });
+    defaultsBtn.addEventListener('click', ()=>{
+      holdInput.value = 5; restInput.value = 5; repsInput.value = 10; prepInput.value = 3;
+      soundToggle.checked = true; vibrateToggle.checked = false; titleToggle.checked = false;
+      saveSettings();
+    });
+
+    document.addEventListener('keydown', (e)=>{
+      if(e.code === 'Space'){ e.preventDefault(); state.running ? pause() : start(); }
+      if(e.key.toLowerCase() === 's'){ e.preventDefault(); skipPhase(); }
+      if(e.key.toLowerCase() === 'r'){ e.preventDefault(); reset(); }
+    });
+
+    // عداد يدوي صغير
+    tapBtn.addEventListener('click', ()=>{
+      tapCount.value = (+tapCount.value||0) + 1;
+      if(soundToggle.checked) beep(950,80);
+    });
+    tapReset.addEventListener('click', ()=>{ tapCount.value = 0; });
+
+    // تحميل إعدادات موجودة
+    loadSettings();
+    // تهيئة أولية
+    reset();
+  </script>
+</body>
+</html>
