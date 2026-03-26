@@ -223,6 +223,9 @@
       .field {
         flex: 1;
       }
+      .field.full {
+        flex: 1 1 100%;
+      }
       .field label {
         display: block;
         font-size: 12px;
@@ -317,10 +320,58 @@
         font-size: 14px;
         color: var(--muted);
       }
+      .mode-switch {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 4px 0 10px;
+      }
+      .mode-btn {
+        text-align: center;
+      }
+      .mode-btn.active {
+        border-color: rgba(34, 197, 94, 0.55);
+        background: rgba(34, 197, 94, 0.2);
+      }
+      .program-card {
+        margin-top: 8px;
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .program-card h3 {
+        margin: 0 0 6px;
+        font-size: 14px;
+      }
+      .program-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+      select {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        font-size: 16px;
+        outline: none;
+      }
       @media (max-width: 480px) {
         .tog label {
           font-size: 16px;
           padding: 8px 0;
+        }
+        .mode-switch {
+          grid-template-columns: 1fr;
+        }
+        select {
+          padding: 14px 16px;
+          font-size: 18px;
+          border-radius: 10px;
         }
       }
       .rep {
@@ -445,6 +496,26 @@
         <section class="panel">
           <h2>Settings</h2>
           <div class="row">
+            <div class="field full">
+              <label>Mode de progression</label>
+              <div class="mode-switch" role="tablist" aria-label="Progression mode">
+                <button id="modeM1" class="mode-btn active" data-mode="month1">Mois 1 · Base</button>
+                <button id="modeM2" class="mode-btn" data-mode="month2">Mois 2 · Force</button>
+                <button id="modeM3" class="mode-btn" data-mode="month3">Mois 3 · Avancé</button>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field full">
+              <label for="sessionTemplate">Séance active</label>
+              <select id="sessionTemplate"></select>
+            </div>
+          </div>
+          <div class="program-card">
+            <h3 id="programTitle">Mois 1 – Base</h3>
+            <p id="programSummary"></p>
+          </div>
+          <div class="row">
             <div class="field">
               <label for="holdSec">Hold duration (seconds)</label>
               <input id="holdSec" type="number" min="1" max="30" value="5" />
@@ -488,6 +559,10 @@
       const restInput = document.getElementById("restSec");
       const repsInput = document.getElementById("reps");
       const prepInput = document.getElementById("prep");
+      const sessionTemplate = document.getElementById("sessionTemplate");
+      const programTitle = document.getElementById("programTitle");
+      const programSummary = document.getElementById("programSummary");
+      const modeButtons = [...document.querySelectorAll(".mode-btn")];
 
       const startBtn = document.getElementById("startBtn");
       const pauseBtn = document.getElementById("pauseBtn");
@@ -516,6 +591,39 @@
         running: false,
         timerId: null,
         lastTick: null,
+        mode: "month1",
+        template: "m1-base",
+      };
+
+      const PROGRAMS = {
+        month1: {
+          title: "Mois 1 – Base",
+          summary:
+            "2 séances/jour. 10 contractions lentes, démarre en 6/6 puis progresse vers 8–10 secondes.",
+          templates: [
+            { id: "m1-base", label: "Lente · 10 reps · 6/6 sec", holdSec: 6, restSec: 6, reps: 10, prepSec: 3 },
+            { id: "m1-progress", label: "Fin de mois · 10 reps · 8/8 sec", holdSec: 8, restSec: 8, reps: 10, prepSec: 3 },
+          ],
+        },
+        month2: {
+          title: "Mois 2 – Force + rapide",
+          summary: "3 séances/jour : 2 lentes (8–10s) + 1 rapide (1s/1s, 20 reps).",
+          templates: [
+            { id: "m2-slow", label: "Lente · 10 reps · 10/10 sec", holdSec: 10, restSec: 10, reps: 10, prepSec: 3 },
+            { id: "m2-fast", label: "Rapide · 20 reps · 1/1 sec", holdSec: 1, restSec: 1, reps: 20, prepSec: 2 },
+          ],
+        },
+        month3: {
+          title: "Mois 3 – Avancé + contrôle",
+          summary:
+            "3 séances/jour (5–6 j/semaine) + frein périnéal solo 2–3 fois/semaine si besoin.",
+          templates: [
+            { id: "m3-morning", label: "Matin debout · 20 reps · 10/10 sec", holdSec: 10, restSec: 10, reps: 20, prepSec: 3 },
+            { id: "m3-afternoon", label: "Après-midi rapide · 40 reps · 1/1 sec", holdSec: 1, restSec: 1, reps: 40, prepSec: 2 },
+            { id: "m3-evening-slow", label: "Soir lente · 10 reps · 8/8 sec", holdSec: 8, restSec: 8, reps: 10, prepSec: 3 },
+            { id: "m3-evening-fast", label: "Soir rapide · 12 reps · 1/1 sec", holdSec: 1, restSec: 1, reps: 12, prepSec: 2 },
+          ],
+        },
       };
 
       // Save/Load Settings
@@ -529,6 +637,8 @@
           sound: !!soundToggle.checked,
           vibrate: !!vibrateToggle.checked,
           title: !!titleToggle.checked,
+          mode: state.mode,
+          template: sessionTemplate.value,
         };
         localStorage.setItem(LS_KEY, JSON.stringify(cfg));
         applySettings(cfg, true);
@@ -544,6 +654,8 @@
           soundToggle.checked = cfg.sound ?? true;
           vibrateToggle.checked = cfg.vibrate ?? false;
           titleToggle.checked = cfg.title ?? false;
+          state.mode = cfg.mode && PROGRAMS[cfg.mode] ? cfg.mode : "month1";
+          hydrateTemplates(state.mode, cfg.template);
           applySettings(cfg, true);
         } catch {}
       }
@@ -552,7 +664,45 @@
         state.restSec = clamp(+cfg.restSec || 5, 1, 30);
         state.reps = clamp(+cfg.reps || 10, 1, 60);
         state.prepSec = clamp(+cfg.prepSec || 3, 0, 10);
+        state.template = cfg.template || state.template;
         if (!quiet) render();
+      }
+      function hydrateTemplates(mode, preferredTemplate) {
+        state.mode = mode;
+        const program = PROGRAMS[mode];
+        sessionTemplate.innerHTML = "";
+        program.templates.forEach((tpl) => {
+          const opt = document.createElement("option");
+          opt.value = tpl.id;
+          opt.textContent = tpl.label;
+          sessionTemplate.appendChild(opt);
+        });
+        const hasPreferred = program.templates.some((tpl) => tpl.id === preferredTemplate);
+        sessionTemplate.value = hasPreferred ? preferredTemplate : program.templates[0].id;
+        modeButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === mode));
+        programTitle.textContent = program.title;
+        programSummary.textContent = program.summary;
+        applyTemplate(sessionTemplate.value);
+      }
+      function applyTemplate(templateId) {
+        const program = PROGRAMS[state.mode];
+        const tpl = program.templates.find((x) => x.id === templateId);
+        if (!tpl) return;
+        holdInput.value = tpl.holdSec;
+        restInput.value = tpl.restSec;
+        repsInput.value = tpl.reps;
+        prepInput.value = tpl.prepSec;
+        applySettings(
+          {
+            holdSec: tpl.holdSec,
+            restSec: tpl.restSec,
+            reps: tpl.reps,
+            prepSec: tpl.prepSec,
+            template: tpl.id,
+          },
+          false
+        );
+        reset();
       }
       function clamp(v, min, max) {
         return Math.max(min, Math.min(max, v));
@@ -748,13 +898,20 @@
         saveSettings();
       });
       defaultsBtn.addEventListener("click", () => {
-        holdInput.value = 5;
-        restInput.value = 5;
-        repsInput.value = 10;
-        prepInput.value = 3;
+        hydrateTemplates("month1", "m1-base");
         soundToggle.checked = true;
         vibrateToggle.checked = false;
         titleToggle.checked = false;
+        saveSettings();
+      });
+      modeButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          hydrateTemplates(btn.dataset.mode);
+          saveSettings();
+        });
+      });
+      sessionTemplate.addEventListener("change", () => {
+        applyTemplate(sessionTemplate.value);
         saveSettings();
       });
 
@@ -783,6 +940,7 @@
       });
 
       // Load existing settings
+      hydrateTemplates("month1", "m1-base");
       loadSettings();
       // Initial setup
       reset();
