@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="fr" dir="ltr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>Kegel Exercise Counter</title>
+    <title>Minuteur d'exercices de Kegel</title>
     <style>
       :root {
         --bg: #0f172a;
@@ -96,22 +96,19 @@
         font-size: 12px;
       }
       main {
-        display: grid;
-        grid-template-columns: 1.1fr 0.9fr;
-        gap: 22px;
         padding: 22px;
-      }
-      @media (max-width: 860px) {
-        main {
-          grid-template-columns: 1fr;
-          gap: 18px;
-          padding: 18px;
-        }
       }
       @media (max-width: 480px) {
         main {
-          gap: 16px;
           padding: 16px;
+        }
+      }
+      .top-tabs {
+        padding: 0 22px 16px;
+      }
+      @media (max-width: 480px) {
+        .top-tabs {
+          padding: 0 16px 12px;
         }
       }
       .panel {
@@ -324,7 +321,7 @@
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
-        margin: 4px 0 10px;
+        margin: 0;
       }
       .mode-btn {
         text-align: center;
@@ -350,6 +347,39 @@
         font-size: 13px;
         line-height: 1.35;
       }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .settings-btn {
+        white-space: nowrap;
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.7);
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 12px;
+        z-index: 30;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .modal {
+        width: 100%;
+        max-width: 560px;
+        max-height: 90dvh;
+        overflow: auto;
+      }
+      .modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
       select {
         width: 100%;
         padding: 12px 14px;
@@ -366,7 +396,20 @@
           padding: 8px 0;
         }
         .mode-switch {
-          grid-template-columns: 1fr;
+          display: flex;
+          overflow-x: auto;
+          padding-bottom: 4px;
+          scrollbar-width: thin;
+        }
+        .mode-btn {
+          min-width: 170px;
+        }
+        .header-actions {
+          width: 100%;
+          justify-content: center;
+        }
+        .settings-btn {
+          width: 100%;
         }
         select {
           padding: 14px 16px;
@@ -441,69 +484,72 @@
     </style>
   </head>
   <body>
-    <div class="app" role="application" aria-label="Kegel Exercise Counter">
+    <div class="app" role="application" aria-label="Minuteur d'exercices de Kegel">
       <header>
         <div class="title">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="10" stroke="currentColor" opacity=".3" />
             <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
-          <span>Kegel Exercise Counter</span>
+          <span>Minuteur Kegel</span>
         </div>
-        <span class="badge">Hold / Relax Counter</span>
+        <div class="header-actions">
+          <span class="badge">Contraction / Relaxation</span>
+          <button id="openSettingsBtn" class="ghost settings-btn">Réglages</button>
+        </div>
       </header>
+      <div class="top-tabs">
+        <div class="mode-switch" role="tablist" aria-label="Mode de progression">
+          <button id="modeM1" class="mode-btn active" data-mode="month1">Mois 1 · Base</button>
+          <button id="modeM2" class="mode-btn" data-mode="month2">Mois 2 · Force</button>
+          <button id="modeM3" class="mode-btn" data-mode="month3">Mois 3 · Avancé</button>
+        </div>
+      </div>
 
       <main>
         <!-- Timer Panel -->
         <section class="panel" aria-live="polite">
-          <h2>Timer</h2>
+          <h2>Minuteur</h2>
           <div class="phase">
-            <div id="phaseChip" class="chip hold">Phase: Hold</div>
-            <div class="rep">Rep: <b id="repNow">0</b>/<span id="repTotal">10</span></div>
+            <div id="phaseChip" class="chip hold">Phase : contraction</div>
+            <div class="rep">Répétitions : <b id="repNow">0</b>/<span id="repTotal">10</span></div>
           </div>
 
           <div class="timer">
             <div class="big" id="countdown">5</div>
-            <div class="label" id="phaseLabel">Contract the muscle…</div>
+            <div class="label" id="phaseLabel">Contractez le muscle…</div>
           </div>
 
-          <div class="progress" aria-label="Progress bar">
+          <div class="progress" aria-label="Barre de progression">
             <span id="bar" style="width: 0%"></span>
           </div>
 
           <div class="controls">
-            <button id="startBtn" class="primary" aria-label="Start (space to toggle)">Start</button>
+            <button id="startBtn" class="primary" aria-label="Démarrer (barre espace)">Démarrer</button>
             <button id="pauseBtn" class="" aria-label="Pause">Pause</button>
-            <button id="resetBtn" class="danger" aria-label="Reset">Reset</button>
-            <button id="skipBtn" class="ghost" aria-label="Skip phase">Skip Phase</button>
+            <button id="resetBtn" class="danger" aria-label="Réinitialiser">Réinitialiser</button>
+            <button id="skipBtn" class="ghost" aria-label="Passer la phase">Passer la phase</button>
           </div>
 
           <div class="tog">
-            <label><input type="checkbox" id="soundToggle" checked />Sound alert</label>
+            <label><input type="checkbox" id="soundToggle" checked />Alerte sonore</label>
             <label><input type="checkbox" id="vibrateToggle" />Vibration</label>
-            <label><input type="checkbox" id="titleToggle" />Show count in page title</label>
+            <label><input type="checkbox" id="titleToggle" />Afficher le compte dans le titre</label>
           </div>
 
           <div class="mini">
-            <label>Quick manual counter:</label>
+            <label>Compteur manuel rapide :</label>
             <input id="tapCount" type="number" value="0" readonly />
             <button id="tapBtn">+1</button>
-            <button id="tapReset" class="ghost">Reset</button>
+            <button id="tapReset" class="ghost">Remettre à zéro</button>
           </div>
         </section>
-
-        <!-- Settings -->
-        <section class="panel">
-          <h2>Settings</h2>
-          <div class="row">
-            <div class="field full">
-              <label>Mode de progression</label>
-              <div class="mode-switch" role="tablist" aria-label="Progression mode">
-                <button id="modeM1" class="mode-btn active" data-mode="month1">Mois 1 · Base</button>
-                <button id="modeM2" class="mode-btn" data-mode="month2">Mois 2 · Force</button>
-                <button id="modeM3" class="mode-btn" data-mode="month3">Mois 3 · Avancé</button>
-              </div>
-            </div>
+      </main>
+      <div id="settingsModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <section class="panel modal">
+          <div class="modal-head">
+            <h2 id="settingsTitle" style="margin: 0">Réglages</h2>
+            <button id="closeSettingsBtn" class="ghost">Fermer</button>
           </div>
           <div class="row">
             <div class="field full">
@@ -517,33 +563,33 @@
           </div>
           <div class="row">
             <div class="field">
-              <label for="holdSec">Hold duration (seconds)</label>
+              <label for="holdSec">Durée de contraction (secondes)</label>
               <input id="holdSec" type="number" min="1" max="30" value="5" />
             </div>
             <div class="field">
-              <label for="restSec">Rest duration (seconds)</label>
+              <label for="restSec">Durée de repos (secondes)</label>
               <input id="restSec" type="number" min="1" max="30" value="5" />
             </div>
           </div>
           <div class="row">
             <div class="field">
-              <label for="reps">Number of reps per session</label>
+              <label for="reps">Nombre de répétitions par séance</label>
               <input id="reps" type="number" min="1" max="60" value="10" />
             </div>
             <div class="field">
-              <label for="prep">Preparation countdown (sec)</label>
+              <label for="prep">Compte à rebours de préparation (sec)</label>
               <input id="prep" type="number" min="0" max="10" value="3" />
             </div>
           </div>
           <div class="row">
-            <button id="saveBtn" class="primary">Save Settings</button>
-            <button id="defaultsBtn" class="ghost">Defaults</button>
+            <button id="saveBtn" class="primary">Enregistrer</button>
+            <button id="defaultsBtn" class="ghost">Valeurs par défaut</button>
           </div>
-          <p class="label" style="margin: 8px 0 0">Settings are saved locally in your browser.</p>
+          <p class="label" style="margin: 8px 0 0">Les réglages sont sauvegardés localement dans votre navigateur.</p>
         </section>
-      </main>
+      </div>
 
-      <footer>Keyboard shortcuts: Space = Start/Pause · S = Skip · R = Reset.</footer>
+      <footer>Raccourcis clavier : Espace = Démarrer/Pause · S = Passer · R = Réinitialiser.</footer>
     </div>
 
     <script>
@@ -563,6 +609,9 @@
       const programTitle = document.getElementById("programTitle");
       const programSummary = document.getElementById("programSummary");
       const modeButtons = [...document.querySelectorAll(".mode-btn")];
+      const settingsModal = document.getElementById("settingsModal");
+      const openSettingsBtn = document.getElementById("openSettingsBtn");
+      const closeSettingsBtn = document.getElementById("closeSettingsBtn");
 
       const startBtn = document.getElementById("startBtn");
       const pauseBtn = document.getElementById("pauseBtn");
@@ -637,7 +686,6 @@
           sound: !!soundToggle.checked,
           vibrate: !!vibrateToggle.checked,
           title: !!titleToggle.checked,
-          mode: state.mode,
           template: sessionTemplate.value,
         };
         localStorage.setItem(LS_KEY, JSON.stringify(cfg));
@@ -654,8 +702,8 @@
           soundToggle.checked = cfg.sound ?? true;
           vibrateToggle.checked = cfg.vibrate ?? false;
           titleToggle.checked = cfg.title ?? false;
-          state.mode = cfg.mode && PROGRAMS[cfg.mode] ? cfg.mode : "month1";
-          hydrateTemplates(state.mode, cfg.template);
+          state.mode = "month1";
+          hydrateTemplates("month1", cfg.template);
           applySettings(cfg, true);
         } catch {}
       }
@@ -765,7 +813,7 @@
         state.running = false;
         clearInterval(state.timerId);
         state.timerId = null;
-        document.title = "Kegel Exercise Counter";
+        document.title = "Minuteur d'exercices de Kegel";
         render(true);
       }
       function skipPhase() {
@@ -816,15 +864,15 @@
             state.running = false;
             clearInterval(state.timerId);
             state.timerId = null;
-            countdownEl.textContent = "Done 👏";
-            phaseLabel.textContent = "Well done! Take a break and repeat the session if you wish.";
+            countdownEl.textContent = "Terminé 👏";
+            phaseLabel.textContent = "Bravo ! Faites une pause puis recommencez si vous voulez.";
             phaseChip.className = "chip rest";
-            phaseChip.textContent = "Session ended";
+            phaseChip.textContent = "Séance terminée";
             barEl.style.width = "100%";
             beep(1200, 180);
             setTimeout(() => beep(1200, 180), 220);
             vibrate([60, 50, 60]);
-            document.title = "Session ended ✅";
+            document.title = "Séance terminée ✅";
             return;
           } else {
             // New repetition
@@ -845,17 +893,17 @@
         // Update phase
         const secLeftRounded = Math.max(0, Math.ceil(state.secondsLeft));
         if (state.phase === "prep") {
-          phaseLabel.textContent = "Get ready…";
+          phaseLabel.textContent = "Préparez-vous…";
           phaseChip.className = "chip rest";
-          phaseChip.textContent = "Preparation";
+          phaseChip.textContent = "Préparation";
         } else if (state.phase === "hold") {
-          phaseLabel.textContent = "Contract the muscle…";
+          phaseLabel.textContent = "Contractez le muscle…";
           phaseChip.className = "chip hold";
-          phaseChip.textContent = "Phase: Hold";
+          phaseChip.textContent = "Phase : contraction";
         } else if (state.phase === "rest") {
-          phaseLabel.textContent = "Relax…";
+          phaseLabel.textContent = "Relâchez…";
           phaseChip.className = "chip rest";
-          phaseChip.textContent = "Phase: Rest";
+          phaseChip.textContent = "Phase : repos";
         } else if (state.phase === "done") {
           // Handled in nextPhase
         }
@@ -876,8 +924,15 @@
           const emoji = state.phase === "hold" ? "🟢" : state.phase === "rest" ? "🔵" : "⏳";
           document.title = `${emoji} ${Math.max(0, secLeftRounded)} · ${state.repNow}/${state.reps}`;
         } else if (!titleToggle.checked && state.phase !== "done") {
-          document.title = "Kegel Exercise Counter";
+          document.title = "Minuteur d'exercices de Kegel";
         }
+      }
+
+      function openSettings() {
+        settingsModal.classList.add("open");
+      }
+      function closeSettings() {
+        settingsModal.classList.remove("open");
       }
 
       // ---------- Events ----------
@@ -896,6 +951,7 @@
 
       saveBtn.addEventListener("click", () => {
         saveSettings();
+        closeSettings();
       });
       defaultsBtn.addEventListener("click", () => {
         hydrateTemplates("month1", "m1-base");
@@ -903,6 +959,12 @@
         vibrateToggle.checked = false;
         titleToggle.checked = false;
         saveSettings();
+        closeSettings();
+      });
+      openSettingsBtn.addEventListener("click", openSettings);
+      closeSettingsBtn.addEventListener("click", closeSettings);
+      settingsModal.addEventListener("click", (e) => {
+        if (e.target === settingsModal) closeSettings();
       });
       modeButtons.forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -927,6 +989,9 @@
         if (e.key.toLowerCase() === "r") {
           e.preventDefault();
           reset();
+        }
+        if (e.key === "Escape") {
+          closeSettings();
         }
       });
 
