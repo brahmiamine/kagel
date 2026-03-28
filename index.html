@@ -564,7 +564,7 @@
           <div class="row">
             <div class="field">
               <label for="holdSec">Durée de contraction (secondes)</label>
-              <input id="holdSec" type="number" min="1" max="30" value="5" />
+              <input id="holdSec" type="number" min="1" max="30" value="8" />
             </div>
             <div class="field">
               <label for="restSec">Durée de repos (secondes)</label>
@@ -634,7 +634,7 @@
         secondsLeft: 3,
         repNow: 0,
         reps: 10,
-        holdSec: 5,
+        holdSec: 8,
         restSec: 5,
         prepSec: 3,
         running: false,
@@ -695,7 +695,7 @@
         try {
           const cfg = JSON.parse(localStorage.getItem(LS_KEY));
           if (!cfg) return;
-          holdInput.value = cfg.holdSec ?? 5;
+          holdInput.value = cfg.holdSec ?? 8;
           restInput.value = cfg.restSec ?? 5;
           repsInput.value = cfg.reps ?? 10;
           prepInput.value = cfg.prepSec ?? 3;
@@ -708,7 +708,7 @@
         } catch {}
       }
       function applySettings(cfg, quiet = false) {
-        state.holdSec = clamp(+cfg.holdSec || 5, 1, 30);
+        state.holdSec = clamp(+cfg.holdSec || 8, 1, 30);
         state.restSec = clamp(+cfg.restSec || 5, 1, 30);
         state.reps = clamp(+cfg.reps || 10, 1, 60);
         state.prepSec = clamp(+cfg.prepSec || 3, 0, 10);
@@ -954,7 +954,7 @@
         closeSettings();
       });
       defaultsBtn.addEventListener("click", () => {
-        hydrateTemplates("month1", "m1-base");
+        hydrateTemplates("month1", "m1-progress");
         soundToggle.checked = true;
         vibrateToggle.checked = false;
         titleToggle.checked = false;
@@ -975,6 +975,13 @@
       sessionTemplate.addEventListener("change", () => {
         applyTemplate(sessionTemplate.value);
         saveSettings();
+      });
+
+      [holdInput, restInput, repsInput, prepInput].forEach((input) => {
+        input.addEventListener("input", saveSettings);
+      });
+      [soundToggle, vibrateToggle, titleToggle].forEach((toggle) => {
+        toggle.addEventListener("change", saveSettings);
       });
 
       document.addEventListener("keydown", (e) => {
@@ -1005,7 +1012,7 @@
       });
 
       // Load existing settings
-      hydrateTemplates("month1", "m1-base");
+      hydrateTemplates("month1", "m1-progress");
       loadSettings();
       // Initial setup
       reset();
