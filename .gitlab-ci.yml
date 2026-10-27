@@ -1,0 +1,20 @@
+image: node:22-alpine
+
+stages:
+  - deploy
+
+deploy-pages:
+  stage: deploy
+  script:
+    - npm install --no-audit --no-fund
+    - export NEXT_PUBLIC_BASE_PATH="$(node -e 'const u=process.env.CI_PAGES_URL; const p=u ? new URL(u).pathname.replace(/\/$/, "") : ""; console.log(p === "/" ? "" : p)')"
+    - npm run test
+    - npm run build
+    - npm run typecheck
+  pages:
+    publish: out
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  environment:
+    name: production
+    url: $CI_PAGES_URL

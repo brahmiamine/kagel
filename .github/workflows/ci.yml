@@ -1,0 +1,29 @@
+name: Build Next.js PWA
+
+on:
+  push:
+    branches: ["main", "feat/nextjs-pwa-gitlab-pages"]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+      - run: npm run typecheck
+      - name: Verify export
+        run: |
+          test -s out/index.html
+          test -s out/manifest.webmanifest
+          test -s out/sw.js
+          test -s out/icons/icon-192.png
+          test -s out/icons/icon-512.png
+          test -s out/icons/apple-touch.png
+          test -s out/splash/iphone.png
+          node -e 'const m=require("./out/manifest.webmanifest"); if(m.display!=="standalone"||m.icons.length<3)process.exit(1)'
