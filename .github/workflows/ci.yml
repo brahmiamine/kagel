@@ -1,0 +1,36 @@
+name: Build Next.js PWA
+
+on:
+  push:
+    branches: ["main", "feat/nextjs-pwa-gitlab-pages"]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+      - run: npm run typecheck
+      - name: Verify export
+        run: |
+          test -s out/index.html
+          test -s out/manifest.webmanifest
+          test -s out/sw.js
+          test -s out/icons/icon-192.png
+          test -s out/icons/icon-512.png
+          test -s out/icons/apple-touch.png
+          test -s out/splash/iphone.png
+          node -e 'const fs=require("node:fs"); const m=JSON.parse(fs.readFileSync("out/manifest.webmanifest","utf8")); if(m.display!=="standalone"||m.icons.length<3)process.exit(1)'
+      - name: Verify GitLab Pages project subpath
+        env:
+          NEXT_PUBLIC_BASE_PATH: /kagel
+        run: |
+          npm run build
+          grep -q '/kagel/_next/' out/index.html
+          node -e 'const fs=require("node:fs"); const m=JSON.parse(fs.readFileSync("out/manifest.webmanifest","utf8")); if(m.start_url!=="/kagel/"||m.scope!=="/kagel/"||m.icons.some(x=>!x.src.startsWith("/kagel/")))process.exit(1)'
