@@ -26,4 +26,4 @@ jobs:
           test -s out/icons/icon-512.png
           test -s out/icons/apple-touch.png
           test -s out/splash/iphone.png
-          node -e 'const m=require("./out/manifest.webmanifest"); if(m.display!=="standalone"||m.icons.length<3)process.exit(1)'
+          node -e 'const fs=require("node:fs"); const m=JSON.parse(fs.readFileSync("out/manifest.webmanifest","utf8")); if(m.display!=="standalone"||m.icons.length<3)process.exit(1)'
